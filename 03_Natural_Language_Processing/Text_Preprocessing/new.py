@@ -17,6 +17,7 @@ from nltk.tree import Tree  # Tree data structure used in NER
 # Download required NLTK data
 # -----------------------------
 nltk.download('punkt')  # Tokenizer
+nltk.download('punkt_tab')  # Tokenizer tables needed by NLTK 3.9 and later
 nltk.download('stopwords')  # List of stopwords
 nltk.download('averaged_perceptron_tagger_eng')  # POS tagger model
 nltk.download('maxent_ne_chunker')  # Named entity chunker

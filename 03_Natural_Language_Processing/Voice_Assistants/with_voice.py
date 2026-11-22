@@ -9,6 +9,7 @@ from nltk.tree import Tree
 
 # Download necessary resources
 nltk.download('punkt')
+nltk.download('punkt_tab')  # Tokenizer tables needed by NLTK 3.9 and later
 nltk.download('stopwords')
 nltk.download('averaged_perceptron_tagger_eng')
 nltk.download('maxent_ne_chunker')
