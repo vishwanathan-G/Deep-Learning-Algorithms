@@ -71,6 +71,14 @@ def swap_languages() -> None:
     st.session_state.swap_warning = False
 
 
+def clear_text() -> None:
+    # Runs as an on_click callback, before the page is redrawn. Streamlit only allows
+    # resetting a widget's session_state key (source_text) at this point.
+    st.session_state.source_text = ""
+    st.session_state.translated_text = ""
+    st.session_state.translation_info = ""
+
+
 async def get_translation(text: str, source_code: str, target_code: str):
     # The public Google Translate web endpoint does not require a Cloud API key.
     async with Translator(service_urls=["translate.googleapis.com"]) as translator:
@@ -163,13 +171,7 @@ button_col, clear_col, spacer = st.columns([2, 1, 7])
 with button_col:
     translate_clicked = st.button("Translate text  →", type="primary", use_container_width=True)
 with clear_col:
-    clear_clicked = st.button("Clear", use_container_width=True)
-
-if clear_clicked:
-    st.session_state.source_text = ""
-    st.session_state.translated_text = ""
-    st.session_state.translation_info = ""
-    st.rerun()
+    st.button("Clear", use_container_width=True, on_click=clear_text)
 
 if translate_clicked:
     if not source_text.strip():
