@@ -1,22 +1,31 @@
-# Smart Virtual Assistant using NLP (Work in Progress)
+# Smart Virtual Assistant using NLP (Partially Tested)
 
-A modular NLP assistant that is meant to take text or voice input, process it, extract information, understand it and respond by summarizing, translating, answering questions and speaking. The component functions are written in the notebooks; packaging them into the modules that `main.py` imports is still to be done.
+A modular NLP assistant that takes text or voice input, processes it, extracts information, classifies it and responds by translating, summarizing, generating text, answering a question and speaking. The component functions were written as cells of `nlp.ipynb`; on 22 November 2026 they were saved, unchanged, as the eight modules that `main.py` imports. Only some of the modules could be tested so far (see "Current status").
 
 ## Files in this folder
 
 | File | Description |
 |---|---|
-| [`nlp.ipynb`](nlp.ipynb) | "Smart Virtual Assistant using NLP": a short description, the planned module layout, one code cell per component (preprocessing, syntax, semantics, information extraction, classification, generation, speech, question answering), an integration cell and a `!pip install preprocess` cell. Saved outputs include errors (see "Current status"). |
-| [`nlp1.ipynb`](nlp1.ipynb) | Earlier variant of the same component cells without the markdown. `parse_syntax` is defined twice, the integration cell imports `text_preprocessing` instead of `preprocess`, and a later cell runs `!pip install syntax_parse`. |
-| [`main.py`](main.py) | Integration script. Imports the eight planned local modules and calls each component on one line of user input. |
+| [`nlp.ipynb`](nlp.ipynb) | "Smart Virtual Assistant using NLP": a short description, the planned module layout (cell 2), one code cell per component (cells 4-11), the integration cell (cell 12, identical to `main.py`) and a markdown note (cell 13) that replaces the former `!pip install preprocess` cell. Saved outputs from the author's runs include errors (see section 13). |
+| [`nlp1.ipynb`](nlp1.ipynb) | Earlier variant of the same component cells without the descriptive markdown. `parse_syntax` is defined twice, and the integration cell imports `text_preprocessing` instead of `preprocess` (there is no module of that name in this folder). Cell 10, which used to run `!pip install syntax_parse`, is now a markdown note. |
+| [`main.py`](main.py) | Integration script, identical to cell 12 of `nlp.ipynb`. Imports the eight modules and calls each component on one line of user input. |
+| [`preprocess.py`](preprocess.py), [`syntax_parse.py`](syntax_parse.py), [`semantic_analysis.py`](semantic_analysis.py), [`info_extract.py`](info_extract.py), [`classifier.py`](classifier.py), [`generation.py`](generation.py), [`speech_module.py`](speech_module.py), [`qa_module.py`](qa_module.py) | The eight component modules, saved verbatim from cells 4-11 of `nlp.ipynb`. Each file starts with a header naming its source cell. See the table in section 3. |
+
+Cell numbers in this README and in the module headers count from 0 (the first cell of a notebook is cell 0).
 
 ## Current status
 
-This project is a work in progress.
+The project structure has been completed from the notebook's own code; the project is partially tested.
 
-- `main.py` and the integration cell of `nlp.ipynb` import eight local modules - `preprocess`, `syntax_parse`, `semantic_analysis`, `info_extract`, `classifier`, `generation`, `speech_module`, `qa_module` - that are **not in this repository yet** (the integration cell of `nlp1.ipynb` imports `text_preprocessing` in place of `preprocess`). Their functions exist only as notebook cells, so the integration step does not run yet.
-- The notebooks contain `!pip install preprocess` (`nlp.ipynb`) and `!pip install syntax_parse` (`nlp1.ipynb`). These commands look for packages on PyPI, not for the project's local modules. Saved output: `!pip install preprocess` installed an unrelated PyPI package named `preprocess` (version 2.0.0, with its dependency `future`), and the next run of the integration cell failed with `ImportError: cannot import name 'preprocess_text' from 'preprocess'`; `!pip install syntax_parse` ended with "No matching distribution found".
-- Other saved errors are listed in section 13.
+- **The modules were never missing code.** Cells 4-11 of `nlp.ipynb` contain every function that `main.py` imports, and cell 2 shows the planned file layout, but the cells had not been saved as `.py` files, so `main.py` and the integration cell could not import them. On 22 November 2026 they were saved verbatim as the eight modules listed in section 3, each with a header naming its source cell, and each module was checked to equal its cell. `main.py` is identical to cell 12.
+- **One addition not from the notebook.** `translate_text` in `generation.py` has a clearly marked compatibility block. In googletrans 4.x, `Translator.translate` is asynchronous and returns a coroutine; the block runs the coroutine with `asyncio.run`. That cannot be done inside an event loop that is already running, such as Jupyter's, so calling `translate_text` from the notebook itself may still fail with googletrans 4.x.
+- **`!pip install preprocess` replaced by a note.** Cell 13 of `nlp.ipynb` used to run `!pip install preprocess`. That installs an unrelated PyPI package (`preprocess` 2.0.0) which shadows the local module, and it caused the `ImportError` saved in the integration cell. The cell is now a markdown note. Anyone who ran it should remove the package with `python -m pip uninstall preprocess`. Cell 10 of `nlp1.ipynb` (`!pip install syntax_parse`; PyPI has no package of that name) is now a note too.
+- **Tests on the test laptop (22 November 2026).** `preprocess.py` and `classifier.py` were tested (results in section 13). Not testable on that machine: `syntax_parse.py`, `semantic_analysis.py` and `info_extract.py` (spaCy's compiled dependencies are blocked there by Windows Smart App Control), `generation.py` and `qa_module.py` (they need `transformers` below 5 and PyTorch; the machine has `transformers` 5.16.1, which lacks the `summarization` and `question-answering` tasks, and no PyTorch) and `speech_module.py` (needs a microphone). `main.py` was therefore not run end to end.
+- **Remaining limitations.**
+  - Coreference resolution is simulated with a fixed print statement.
+  - `main.py` ends by speaking "Welcome to NLP Project!" with `pyttsx3`.
+  - `generation.py` loads a large summarization model when it is imported, although `summarize_text` uses sumy.
+  - The saved outputs of the integration cell still show the old `ImportError` from before the modules existed.
 
 ## 1. Algorithm Name
 
@@ -37,20 +46,20 @@ A virtual assistant is a system that accepts natural-language input (typed or sp
 
 ## 3. How It Works
 
-**Components defined in the notebooks** (the module column is the planned file name from the notebook's own layout):
+**Modules** (saved from the component cells of `nlp.ipynb`; the file names follow the notebook's planned layout in cell 2):
 
-| Planned module | Function(s) in the notebook | What the code does |
-|---|---|---|
-| `preprocess.py` | `preprocess_text(text)` | Lower-cases, removes every character that is not a word character or whitespace (`re.sub(r'[^\w\s]', '', text)`), tokenizes with `nltk.word_tokenize`, drops English stop words, applies `PorterStemmer`, then applies `WordNetLemmatizer` to the stems, and returns the list |
-| `syntax_parse.py` | `parse_syntax(text)` | spaCy `en_core_web_sm`: prints each token with its POS tag, then `token --> dependency --> head` for each token |
-| `semantic_analysis.py` | `analyze_semantics(text)` | Prints spaCy named entities with labels, then a fixed example line under "Coreference Resolution (Simulated)" |
-| `info_extract.py` | `extract_entities_relations(text)` | Prints entities, then a "Relation" line for each token whose dependency label is `ROOT` |
-| `classifier.py` | `sentiment_analysis(text)`, `spam_detection()` | TextBlob sentiment polarity; a `CountVectorizer` + `MultinomialNB` model trained on four sample sentences (`'win money now'`, `'hello friend'`, `'buy now'`, `'how are you?'` with labels 1, 0, 1, 0) that predicts the label of `'win free prize'` |
-| `generation.py` | `translate_text(text, dest='fr')`, `summarize_text(text)`, `generate_text(prompt)` | `googletrans.Translator().translate`; sumy `LsaSummarizer` returning 2 sentences; `transformers.pipeline("text-generation")` with `max_length=30`. The cell also creates `pipeline("summarization")` at load time, which `summarize_text` does not use |
-| `speech_module.py` | `recognize_speech()`, `speak_text(text)` | SpeechRecognition microphone capture with `recognize_google`; `pyttsx3` speech output |
-| `qa_module.py` | `answer_question(question, context)` | `transformers.pipeline("question-answering")`, returns the answer span |
+| Module | Source cell in `nlp.ipynb` | Function(s) | What the code does |
+|---|---|---|---|
+| `preprocess.py` | 4 | `preprocess_text(text)` | Downloads the NLTK data `punkt`, `punkt_tab`, `stopwords` and `wordnet` when imported. Lower-cases, removes every character that is not a word character or whitespace (`re.sub(r'[^\w\s]', '', text)`), tokenizes with `nltk.word_tokenize`, drops English stop words, applies `PorterStemmer`, then applies `WordNetLemmatizer` to the stems, and returns the list |
+| `syntax_parse.py` | 5 | `parse_syntax(text)` | spaCy `en_core_web_sm`: prints each token with its POS tag, then `token --> dependency --> head` for each token |
+| `semantic_analysis.py` | 6 | `analyze_semantics(text)` | Prints spaCy named entities with labels, then a fixed example line under "Coreference Resolution (Simulated)" |
+| `info_extract.py` | 7 | `extract_entities_relations(text)` | Prints entities, then a "Relation" line for each token whose dependency label is `ROOT` |
+| `classifier.py` | 8 | `sentiment_analysis(text)`, `spam_detection()` | TextBlob sentiment polarity; a `CountVectorizer` + `MultinomialNB` model trained on four sample sentences (`'win money now'`, `'hello friend'`, `'buy now'`, `'how are you?'` with labels 1, 0, 1, 0) that predicts the label of `'win free prize'` |
+| `generation.py` | 9 | `translate_text(text, dest='fr')`, `summarize_text(text)`, `generate_text(prompt)` | `translate` of a module-level googletrans `Translator()`, plus the compatibility block for googletrans 4.x (the only addition not from the notebook); sumy `LsaSummarizer` returning 2 sentences; `transformers.pipeline("text-generation")` with `max_length=30`. The module also creates `pipeline("summarization")` when imported, which `summarize_text` does not use |
+| `speech_module.py` | 10 | `recognize_speech()`, `speak_text(text)` | SpeechRecognition microphone capture with `recognize_google`; `pyttsx3` speech output |
+| `qa_module.py` | 11 | `answer_question(question, context)` | `transformers.pipeline("question-answering")`, returns the answer span |
 
-**Integration (`main.py` and the last notebook cell)** reads one line of input and prints, in order: preprocessing, syntax parsing, semantic analysis, information extraction, sentiment, translation into Tamil (`dest='ta'`), LSA summary, generated text for the prompt "Once upon a time", the answer to a fixed question about a short hard-coded context, a speech-recognition heading (the `recognize_speech()` call is commented out), and finally speaks "Welcome to NLP Project!". `spam_detection` and `recognize_speech` are imported but not called.
+**Integration (`main.py`, identical to cell 12 of `nlp.ipynb`)** reads one line of input and prints, in order: preprocessing, syntax parsing, semantic analysis, information extraction, sentiment, translation into Tamil (`dest='ta'`), LSA summary, generated text for the prompt "Once upon a time", the answer to a fixed question about a short hard-coded context, a speech-recognition heading (the `recognize_speech()` call is commented out), and finally speaks "Welcome to NLP Project!". `spam_detection` and `recognize_speech` are imported but not called.
 
 ## 4. Why It Is Used
 
@@ -109,12 +118,12 @@ Each singular vector is a latent "topic"; sentences with large weights in $V$ fo
 
 | Setting | Value |
 |---|---|
-| spaCy model | `en_core_web_sm` (loaded separately in each spaCy cell) |
-| NLTK data | `punkt`, `stopwords`, `wordnet` |
+| spaCy model | `en_core_web_sm` (loaded separately in `syntax_parse.py`, `semantic_analysis.py` and `info_extract.py`) |
+| NLTK data | `punkt`, `punkt_tab`, `stopwords`, `wordnet` |
 | Punctuation regex | `r'[^\w\s]'` |
 | Preprocessing order | stop-word removal, then stemming, then lemmatization of the stems |
 | Spam model | `CountVectorizer()` and `MultinomialNB()` with default settings; 4 training sentences |
-| Translation | `dest='fr'` by default; `dest='ta'` in `main.py` |
+| Translation | googletrans `Translator()` with default settings; `dest='fr'` by default, `dest='ta'` in `main.py`; with googletrans 4.x the returned coroutine is run with `asyncio.run` |
 | Summarizer | sumy `LsaSummarizer`, `Tokenizer("english")`, 2 sentences |
 | Text generation | `pipeline("text-generation")` without a model name (library default model), `max_length=30`, prompt "Once upon a time" in `main.py` |
 | Question answering | `pipeline("question-answering")` without a model name (library default model) |
@@ -122,19 +131,19 @@ Each singular vector is a latent "topic"; sentences with large weights in $V$ fo
 
 ## 7. Advantages
 
-- Modular design: each capability is a separate function and can be developed or replaced on its own.
+- Modular design: each capability is a separate module and can be developed or replaced on its own.
 - Pretrained transformer pipelines give generation and question answering without any training.
 - Classical components (spaCy, NLTK, Naive Bayes, LSA) are fast and easy to explain.
 - Covers both text and voice input and output.
 
 ## 8. Disadvantages
 
-- The integration layer is unfinished (the imported modules do not exist yet).
-- Pipelines created without a model name depend on library defaults, which change between versions; the saved outputs show one environment where `pipeline("summarization")` was not available at all.
-- Default transformer models are large downloads and run slowly on a CPU; some pipelines are rebuilt on every function call.
+- `main.py` has not been run end to end yet, and several modules could not be tested (see "Current status").
+- Pipelines created without a model name depend on library defaults, which change between versions; the saved outputs show one environment where `pipeline("summarization")` was not available at all, and `transformers` 5.x provides neither the `summarization` nor the `question-answering` task.
+- Default transformer models are large downloads and run slowly on a CPU. `generation.py` loads a summarization model when imported even though `summarize_text` uses sumy, and `generate_text` and `answer_question` rebuild their pipelines on every call.
 - The spam classifier is trained on four sentences, so it only demonstrates the method.
 - Coreference resolution is simulated with a fixed print statement.
-- Translation and speech recognition rely on unofficial or free web services and need internet access.
+- Translation and speech recognition rely on unofficial or free web services and need internet access. With googletrans 4.x the translation call is asynchronous; `generation.py` handles this with `asyncio.run`, which cannot be used inside Jupyter.
 
 ## 9. Real-World Applications
 
@@ -153,8 +162,9 @@ Each singular vector is a latent "topic"; sentences with large weights in $V$ fo
 | spaCy | `import spacy` | POS tags, dependencies, entities |
 | TextBlob | `from textblob import TextBlob` | Sentiment polarity |
 | scikit-learn | `from sklearn.feature_extraction.text import CountVectorizer`, `from sklearn.naive_bayes import MultinomialNB` | Spam detection |
-| Transformers (PyTorch backend) | `from transformers import pipeline` | Text generation, question answering (and the unused summarization pipeline) |
+| Transformers (PyTorch backend; a release below 5) | `from transformers import pipeline` | Text generation, question answering (and the unused summarization pipeline) |
 | googletrans | `from googletrans import Translator` | Translation |
+| asyncio, inspect (standard library) | `import asyncio`, `import inspect` (`generation.py` only) | Running the coroutine that googletrans 4.x returns |
 | sumy | `from sumy.summarizers.lsa import LsaSummarizer`, `from sumy.parsers.plaintext import PlaintextParser`, `from sumy.nlp.tokenizers import Tokenizer` | Extractive summarization |
 | SpeechRecognition | `import speech_recognition as sr` | Microphone input |
 | pyttsx3 | `import pyttsx3` | Text-to-speech |
@@ -166,20 +176,48 @@ There is no dataset file.
 - **User input**: one line of text typed at run time (`main.py`).
 - **Spam detection**: four hard-coded sentences with labels (1 = spam, 0 = not spam) and one test sentence, `'win free prize'`.
 - **Question answering**: a fixed question and a short hard-coded two-sentence context in `main.py`.
-- **Pretrained resources**: spaCy `en_core_web_sm`; NLTK `punkt`, `stopwords` and `wordnet`; default transformer models for text generation, question answering and summarization, downloaded from the Hugging Face Hub on first use (several hundred MB or more each) and cached under `%USERPROFILE%\.cache\huggingface`.
+- **Pretrained resources**: spaCy `en_core_web_sm`; NLTK `punkt`, `punkt_tab`, `stopwords` and `wordnet`; default transformer models for text generation, question answering and summarization, downloaded from the Hugging Face Hub on first use (several hundred MB or more each) and cached under `%USERPROFILE%\.cache\huggingface`.
 
 ## 12. How to Execute
 
-From the repository root, after following "Getting started" in the [root README](../../README.md):
+From the repository root, after following "Getting started" in the [root README](../../README.md).
+
+**Dependencies** (all of these packages are in the root `requirements.txt`; the spaCy model and the NLTK data are downloaded separately as noted):
+
+| Package | Needed by |
+|---|---|
+| `nltk`, with the data `punkt`, `punkt_tab`, `stopwords` and `wordnet` (downloaded by `preprocess.py` when it is imported) | `preprocess.py` |
+| `spacy` and the model `en_core_web_sm` (`python -m spacy download en_core_web_sm`) | `syntax_parse.py`, `semantic_analysis.py`, `info_extract.py` |
+| `textblob`, `scikit-learn` | `classifier.py` |
+| `transformers` below 5, and `torch` | `generation.py` (`summarization` and `text-generation` pipelines) and `qa_module.py` (`question-answering` pipeline). The models download on first use. `generation.py` creates the summarization pipeline when it is imported, even though `summarize_text` uses sumy |
+| `sumy` | `generation.py` (`summarize_text`) |
+| `googletrans` 4.0.2 | `generation.py` (`translate_text`) |
+| `SpeechRecognition` and `PyAudio` | `speech_module.py` (`recognize_speech`) |
+| `pyttsx3` | `speech_module.py` (`speak_text`) |
+
+If `!pip install preprocess` was ever run from the notebook, remove that unrelated package first:
+
+```powershell
+python -m pip uninstall preprocess
+```
+
+**Run the assistant** from this folder:
 
 ```powershell
 cd 03_Natural_Language_Processing\Smart_Virtual_Assistant
+python main.py
+```
+
+Type one line of text at the `Enter input:` prompt.
+
+**Use the notebook** to run single components:
+
+```powershell
 python -m jupyter notebook nlp.ipynb
 ```
 
-1. Run the component cells in order, from the preprocessing cell to the question-answering cell.
-2. Skip the integration cell (it imports the missing modules) and the `!pip install preprocess` cell.
-3. Call the functions from a new cell, for example:
+1. Run the component cells 4-11 in order.
+2. Call the functions from a new cell, for example:
 
 ```python
 sample = "The city library opened a new reading room last week. Visitors said the space was bright and quiet."
@@ -192,17 +230,19 @@ spam_detection()
 print(summarize_text(sample))
 ```
 
+3. The integration cell (cell 12) does the same as `main.py`; prefer `python main.py`. Inside Jupyter, the notebook's own `translate_text` (cell 9, without the compatibility block) receives a coroutine from googletrans 4.x instead of a translation, and the `asyncio.run` in `generation.py` cannot be used in Jupyter's running event loop.
+
 Notes:
 
-- The first run downloads NLTK data, and the generation cell downloads a default summarization model; `generate_text` and `answer_question` download their default models on first call. All of this needs internet access.
-- The generation cell creates `pipeline("summarization")` before it defines `translate_text`, `summarize_text` and `generate_text`. If that line raises `KeyError: "Unknown task summarization"` (as in the saved output of `nlp.ipynb`), the installed `transformers` release does not provide that task and those three functions are not defined.
-- `translate_text` needs internet access. `requirements.txt` pins `googletrans==4.0.2`, whose `Translator` is used asynchronously in [Machine_Translation_App/app.py](../Machine_Translation_App/app.py) (`async with Translator(...)` and `await translator.translate(...)`); the notebook's synchronous call may need the same treatment with that version.
-- `recognize_speech()` needs a microphone and PyAudio.
-- `python main.py` stops at its first import until the eight modules exist in this folder.
+- The first run downloads NLTK data. Importing `generation.py` (which `main.py` does at start-up), or running cell 9, creates the summarization pipeline and downloads its default model; `generate_text` and `answer_question` download their default models on first call. All of this needs internet access.
+- If `pipeline("summarization")` raises `KeyError: "Unknown task summarization"` (as in the saved output of `nlp.ipynb`), the installed `transformers` release does not provide that task. `transformers` 5.x (for example 5.16.1) lacks both `summarization` and `question-answering`, so `requirements.txt` keeps `transformers` below 5.
+- `translate_text` needs internet access.
+- `recognize_speech()` needs a microphone and PyAudio; `main.py` does not call it (the line is commented out).
+- `main.py` ends by speaking "Welcome to NLP Project!" through `pyttsx3`.
 
 ## 13. Expected Output
 
-There is no successful end-to-end run in the saved outputs. When the component functions are called individually they print or return the following:
+There is no successful end-to-end run in the saved outputs, and `main.py` has not been run end to end yet. When the component functions are called individually they print or return the following:
 
 | Function | Output |
 |---|---|
@@ -218,22 +258,39 @@ There is no successful end-to-end run in the saved outputs. When the component f
 | `answer_question` | A short answer span taken from the context |
 | `speak_text` | Spoken audio, no printed output |
 
-**Saved outputs in the notebooks** (from the author's runs, in two different environments):
+**Test results** (22 November 2026, test laptop with Windows 11):
+
+| Module | Call | Result |
+|---|---|---|
+| `preprocess.py` | `preprocess_text('The students are running quickly to their classes!')` | `['student', 'run', 'quickli', 'class']` |
+| `classifier.py` | `sentiment_analysis("I really love this wonderful project")` | Polarity `0.75` |
+| `classifier.py` | `sentiment_analysis("This is a terrible, awful result")` | Polarity `-1.0` |
+| `classifier.py` | `spam_detection()` (test sentence `'win free prize'`) | `1` (spam) |
+| `syntax_parse.py`, `semantic_analysis.py`, `info_extract.py` | - | Not tested: spaCy's compiled dependencies are blocked by Windows Smart App Control on that machine |
+| `generation.py`, `qa_module.py` | - | Not tested: they need `transformers` below 5 and PyTorch; the machine has `transformers` 5.16.1 and no PyTorch |
+| `speech_module.py` | - | Not tested: needs a microphone |
+| `main.py` | - | Not run end to end |
+
+In addition, googletrans 4.x was confirmed to make `Translator.translate` asynchronous (it returns a coroutine), which is why `generation.py` has its compatibility block.
+
+**Saved outputs in the notebooks** (from the author's runs, in two different environments). The Windows username in file paths was replaced with `<user>`, and the outputs of the two former `!pip install` cells went away when those cells became markdown notes.
 
 | Notebook | Cell | Saved output |
 |---|---|---|
-| `nlp.ipynb` | Preprocessing | NLTK messages reporting `punkt`, `stopwords` and `wordnet` as already up to date |
-| `nlp.ipynb` | Classifier | `ModuleNotFoundError: No module named 'textblob'` (TextBlob was not installed at the time; it is now listed in `requirements.txt`) |
-| `nlp.ipynb` | Generation | `KeyError: "Unknown task summarization, ..."` raised by `pipeline("summarization")`. The list of available tasks printed with the error includes `text-generation` but not `summarization` or `question-answering` |
-| `nlp.ipynb` | Integration | `ImportError: cannot import name 'preprocess_text' from 'preprocess'` (the unrelated PyPI package), followed by a kernel-crash notice |
-| `nlp.ipynb` | `!pip install preprocess` | Installed the unrelated PyPI package `preprocess` 2.0.0 and `future` 1.0.0 |
-| `nlp1.ipynb` | Generation | The summarization pipeline loaded with the library's default model and the message "Device set to use cpu" |
-| `nlp1.ipynb` | Integration | `ModuleNotFoundError: No module named 'syntax_parse'` (raised on the second import line) |
-| `nlp1.ipynb` | `!pip install syntax_parse` | `ERROR: No matching distribution found for syntax_parse` |
+| `nlp.ipynb` | Preprocessing (cell 4) | NLTK messages reporting `punkt`, `stopwords` and `wordnet` as already up to date (saved before the `punkt_tab` download was added to the cell) |
+| `nlp.ipynb` | Classifier (cell 8) | `ModuleNotFoundError: No module named 'textblob'` (TextBlob was not installed at the time; it is now listed in `requirements.txt`) |
+| `nlp.ipynb` | Generation (cell 9) | `KeyError: "Unknown task summarization, ..."` raised by `pipeline("summarization")`. The list of available tasks printed with the error includes `text-generation` but not `summarization` or `question-answering` |
+| `nlp.ipynb` | Integration (cell 12) | `ImportError: cannot import name 'preprocess_text' from 'preprocess'`, raised by the unrelated PyPI package in `site-packages`, followed by a kernel-crash notice. This output dates from before the local modules existed |
+| `nlp.ipynb` | Cell 13 | Now a markdown note. As a code cell (`!pip install preprocess`) it had installed the unrelated package `preprocess` 2.0.0 and `future` 1.0.0; that output is no longer in the notebook |
+| `nlp1.ipynb` | Generation (cell 6) | The summarization pipeline loaded with the library's default model and the message "Device set to use cpu" |
+| `nlp1.ipynb` | Integration (cell 9) | `ModuleNotFoundError: No module named 'syntax_parse'` (raised on the second import line, before `syntax_parse.py` existed) |
+| `nlp1.ipynb` | Cell 10 | Now a markdown note. As a code cell (`!pip install syntax_parse`) it had ended with `ERROR: No matching distribution found for syntax_parse`; that output is no longer in the notebook |
 
 ## Next steps
 
-1. Save each component cell as a local module next to `main.py`: `preprocess.py`, `syntax_parse.py`, `semantic_analysis.py`, `info_extract.py`, `classifier.py`, `generation.py`, `speech_module.py`, `qa_module.py`.
-2. Remove the `!pip install preprocess` and `!pip install syntax_parse` cells, since PyPI does not provide the project's own modules.
-3. Pass explicit model names to the transformer pipelines and use a `transformers` release that provides the `summarization` and `question-answering` tasks, or drop the unused `summarizer` line.
-4. Add the components listed in the notebook's planned layout that are not implemented yet: constituency parsing, word-sense disambiguation, real coreference resolution and topic classification.
+1. Run `python main.py` end to end on a machine where spaCy loads, with `transformers` below 5, PyTorch, a microphone and speakers, so that `syntax_parse.py`, `semantic_analysis.py`, `info_extract.py`, `generation.py`, `qa_module.py` and `speech_module.py` are tested too.
+2. Re-run the integration cell of `nlp.ipynb`, or clear its output, so that it no longer shows the `ImportError` from before the modules existed.
+3. Pass explicit model names to the transformer pipelines, and remove the unused summarization pipeline that `generation.py` creates when imported (or create it only when needed).
+4. Make `translate_text` usable from inside Jupyter with googletrans 4.x, where `asyncio.run` cannot be used.
+5. Change the first import of the integration cell in `nlp1.ipynb` from `text_preprocessing` to `preprocess`, or treat `nlp1.ipynb` as an earlier draft.
+6. Add the components listed in the notebook's planned layout that are not implemented yet: constituency parsing, word-sense disambiguation, real coreference resolution and topic classification.

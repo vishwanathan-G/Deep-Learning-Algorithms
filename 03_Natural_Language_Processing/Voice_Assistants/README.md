@@ -26,7 +26,7 @@ A voice assistant connects three stages: **speech recognition** converts audio i
 
 **`with_voice.py`**
 
-1. Downloads the NLTK data it needs (`punkt`, `stopwords`, `averaged_perceptron_tagger_eng`, `maxent_ne_chunker`, `maxent_ne_chunker_tab`, `words`, `wordnet`).
+1. Downloads the NLTK data it needs (`punkt`, `punkt_tab`, `stopwords`, `averaged_perceptron_tagger_eng`, `maxent_ne_chunker`, `maxent_ne_chunker_tab`, `words`, `wordnet`).
 2. Creates the stop-word set, `PorterStemmer`, `WordNetLemmatizer` and a `pyttsx3` engine.
 3. Prints a "Speak now..." prompt, opens the default microphone, calibrates for background noise with `adjust_for_ambient_noise`, and records with `listen(source, timeout=10, phrase_time_limit=30)`.
 4. Sends the audio to `recognize_google`. If recognition fails, it prints "Could not recognize your voice:" with the error and exits.
@@ -157,7 +157,7 @@ Requirements and notes:
 - Speakers or headphones to hear the `pyttsx3` output.
 - Start speaking within 10 seconds of the prompt.
 - Say "goodbye" to stop `bot_with_voice.py` (or press `Ctrl+C`).
-- NLTK 3.9 and later load `punkt_tab` for tokenization, while `with_voice.py` downloads `punkt`. If a `LookupError` mentions `punkt_tab`, run `python -c "import nltk; nltk.download('punkt_tab')"` once.
+- `with_voice.py` downloads `punkt_tab` as well as `punkt`. NLTK 3.9 and later load `punkt_tab` for tokenization; with NLTK 3.10.3, `punkt` alone is not enough and tokenization raises a `LookupError` for `punkt_tab`. The `punkt_tab` download was added to the script on 22 November 2026.
 
 ## 13. Expected Output
 
@@ -175,3 +175,8 @@ There are no saved outputs for these scripts; this section describes what they p
 1. The spoken and printed greeting.
 2. For each round: a "Listening... (Say your question)" prompt, `You asked: <recognised text>`, and a two-sentence Wikipedia summary that is printed and spoken. One of the fallback messages from section 3 is spoken instead when nothing is heard, the speech is not understood, the topic is ambiguous or no page is found.
 3. "Goodbye! See you next time." when the question contains "goodbye".
+
+**Check on 22 November 2026** (Windows 11, NLTK 3.10.3):
+
+- `with_voice.py` ran end to end with the real NLTK on a clean NLTK data folder, with the microphone (`speech_recognition`) and the speaker (`pyttsx3`) replaced by test stand-ins. The stand-in delivered the sample sentence "Barack Obama was born in Hawaii. He was the president of the United States." as if it had been recognised. Tokenization, stop-word removal, stemming, lemmatization, POS tags and the named entities `['Barack', 'Obama', 'Hawaii', 'United States']` were produced, and the final text reached the speaker stand-in. The real microphone, speaker and Google recogniser were not tested.
+- `bot_with_voice.py` was not run: it needs a microphone and the `wikipedia` library (and internet access).

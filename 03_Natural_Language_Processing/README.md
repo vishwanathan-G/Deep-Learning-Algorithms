@@ -1,6 +1,6 @@
 # Natural Language Processing
 
-Practice code for natural language processing (NLP): text preprocessing with spaCy and NLTK, voice-driven assistants, a modular virtual-assistant project (work in progress) and a Streamlit machine-translation app. This page gives an overview of the folder and documents the Machine Translation App; the other subfolders have their own README files.
+Practice code for natural language processing (NLP): text preprocessing with spaCy and NLTK, voice-driven assistants, a modular virtual-assistant project (partially tested) and a Streamlit machine-translation app. This page gives an overview of the folder and documents the Machine Translation App; the other subfolders have their own README files.
 
 ## Files in this folder
 
@@ -8,7 +8,7 @@ Practice code for natural language processing (NLP): text preprocessing with spa
 |---|---|---|---|
 | [`Text_Preprocessing/`](Text_Preprocessing/) | `code1.py`, `new.py` | Tokenization, stop-word removal, stemming, lemmatization, POS tagging, NER, dependency parsing; text-to-speech of the result | [README](Text_Preprocessing/README.md) |
 | [`Voice_Assistants/`](Voice_Assistants/) | `with_voice.py`, `bot_with_voice.py` | Speech-to-text, NLTK pipeline on spoken input, spoken Wikipedia answers | [README](Voice_Assistants/README.md) |
-| [`Smart_Virtual_Assistant/`](Smart_Virtual_Assistant/) | `nlp.ipynb`, `nlp1.ipynb`, `main.py` | Modular assistant: preprocessing, parsing, NER, sentiment, spam detection, translation, summarization, generation, QA, speech (work in progress) | [README](Smart_Virtual_Assistant/README.md) |
+| [`Smart_Virtual_Assistant/`](Smart_Virtual_Assistant/) | `nlp.ipynb`, `nlp1.ipynb`, `main.py` and eight modules saved from the notebook (`preprocess.py`, `syntax_parse.py`, `semantic_analysis.py`, `info_extract.py`, `classifier.py`, `generation.py`, `speech_module.py`, `qa_module.py`) | Modular assistant: preprocessing, parsing, NER, sentiment, spam detection, translation, summarization, generation, QA, speech (partially tested) | [README](Smart_Virtual_Assistant/README.md) |
 | [`Machine_Translation_App/`](Machine_Translation_App/) | `app.py`, `requirements.txt`, `.streamlit/config.toml`, `.gitignore`, `README.md` | Streamlit translation app using `googletrans` | Sections 1-13 below and the [app's own README](Machine_Translation_App/README.md) |
 
 ## NLP overview
@@ -65,7 +65,7 @@ Machine translation (MT) automatically converts text in a source language into t
    through `asyncio.run`, using `"auto"` as the source code for automatic detection.
 7. Stores the translated text and an information line ("Detected source: ... · Target: ..." or "Source: ... · Target: ...") and reruns the page to display them.
 8. On failure it shows an error message asking the user to check the internet connection, plus the exception type and message.
-9. **Clear** is meant to set the source text, the translation and the information line in session state to empty strings and rerun the page. **Known issue:** in a Streamlit AppTest run (Streamlit 1.57), clicking **Clear** raises `StreamlitAPIException: st.session_state.source_text cannot be modified after the widget with key source_text is instantiated`, because the handler runs after the text area has been drawn. Moving the reset into an `on_click` callback (as the swap button already does) would fix it. **Download translation as .txt** saves the result as `translation.txt` (UTF-8).
+9. **Clear** runs the `on_click` callback `clear_text()`, which sets the source text, the translation and the information line in session state to empty strings. Streamlit runs the callback before the page is redrawn, which is when it allows the key of an existing widget (`source_text`) to be reset; the swap button's `swap_languages` callback uses the same pattern. Earlier versions set `st.session_state.source_text` after the text area had been created, which raised `StreamlitAPIException`; on 22 November 2026 the reset was moved into `clear_text()` and the old block after the widgets, which ended with `st.rerun()`, was removed. **Download translation as .txt** saves the result as `translation.txt` (UTF-8).
 
 ## 4. Why It Is Used
 
@@ -179,3 +179,6 @@ There are no saved outputs for the app; this section describes what it shows.
 3. After a successful translation, the translation area is filled, a line such as `Detected source: <language> · Target: <language>` appears under it, and a **Download translation as .txt** button is shown.
 4. Messages for invalid input: "Enter some text first.", "Choose different source and target languages." or the character-limit error.
 5. If the request fails: "Translation failed. Check your internet connection and try again..." with a "Technical detail" caption showing the exception.
+6. **Clear** empties the source and translation boxes.
+
+**Check on 22 November 2026** (Windows 11, Streamlit 1.57, Streamlit `AppTest`): the page renders without errors; after a sentence is typed the counter shows `19 / 15,000 characters`; clicking **Clear** raises no exception and empties both the source and the translation box. Translation itself was not exercised, because it needs internet access.

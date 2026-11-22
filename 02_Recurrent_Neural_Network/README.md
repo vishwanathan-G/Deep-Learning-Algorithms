@@ -6,7 +6,7 @@ A Keras model with a word-embedding layer and a `SimpleRNN` layer that classifie
 
 | File | Description |
 |---|---|
-| [`RNN.ipynb`](RNN.ipynb) | Loads the pre-encoded IMDB reviews through Keras, pads them to 500 tokens, trains an Embedding + SimpleRNN + Dense model for 5 epochs, evaluates it on the test set and prints predictions for six test reviews. The notebook keeps the saved outputs of the author's run. |
+| [`RNN.ipynb`](RNN.ipynb) | Loads the pre-encoded IMDB reviews through Keras, pads them to 500 tokens, trains an Embedding + SimpleRNN + Dense model for 5 epochs, evaluates it on the test set and prints predictions for six test reviews next to their actual labels. The saved outputs are from a re-run on 22 November 2026 (see section 13). |
 
 ## 1. Algorithm Name
 
@@ -34,7 +34,7 @@ An RNN processes a sequence one element at a time and carries a hidden state fro
 5. Compiles with `optimizer='adam'`, `loss='binary_crossentropy'`, `metrics=['accuracy']`.
 6. Trains with `epochs=5`, `batch_size=64`, `validation_split=0.2`.
 7. Evaluates on the 25,000 test reviews and prints the test accuracy.
-8. Predicts `x_test[5:11]` and prints the probability, predicted sentiment and an "Actual Sentiment" line for each (see the note in section 13).
+8. Predicts `x_test[5:11]` and prints, for each of the six reviews, the probability, the predicted sentiment and the actual sentiment from `y_test[5 + i]`, the label of the same review.
 
 **Model architecture** (output shapes and parameter counts are worked out from the layer definitions; the notebook does not call `model.summary()`)
 
@@ -166,7 +166,7 @@ python -m jupyter notebook RNN.ipynb
 
 Run the cells in order (Run > Run All Cells).
 
-To execute the notebook without the browser and keep the author's saved outputs untouched:
+To execute the notebook without the browser and keep the saved outputs untouched, write the result to a new file:
 
 ```powershell
 python -m jupyter nbconvert --to notebook --execute RNN.ipynb --output RNN_executed.ipynb
@@ -175,32 +175,34 @@ python -m jupyter nbconvert --to notebook --execute RNN.ipynb --output RNN_execu
 Notes:
 
 - The first run needs internet access to download the IMDB data (about 17 MB).
-- Training runs on the CPU on native Windows (TensorFlow 2.11 and later do not use the GPU there). In the saved log each epoch took about 21-24 seconds on the author's machine.
+- Training runs on the CPU on native Windows (TensorFlow 2.11 and later do not use the GPU there). The re-run that produced the saved outputs (22 November 2026, Windows 11, Python 3.10.11, TensorFlow 2.21.0, Keras 3.12.4, CPU only) took about 9 minutes for the whole notebook; in its log the epochs took between 32 and 225 seconds.
 
 ## 13. Expected Output
 
+The saved outputs come from a re-run of the whole notebook on 22 November 2026 on the real IMDB dataset (from the Keras cache), with Python 3.10.11, TensorFlow 2.21.0 and Keras 3.12.4 on the CPU. All 6 cells ran and every saved output was regenerated, so the numbers of the author's earlier run are no longer in the notebook.
+
 1. The printed `x_train` array: a NumPy array of Python lists of integers, shortened by NumPy with `...`.
-2. A training log of 5 epochs with 313 steps each. Saved output from the author's run:
+2. A training log of 5 epochs with 313 steps each. Saved output of the re-run:
 
 | Epoch | accuracy | loss | val_accuracy | val_loss |
 |---|---|---|---|---|
-| 1 | 0.7238 | 0.5282 | 0.8354 | 0.3837 |
-| 2 | 0.8673 | 0.3331 | 0.8568 | 0.3570 |
-| 3 | 0.9258 | 0.2023 | 0.8552 | 0.3788 |
-| 4 | 0.9603 | 0.1224 | 0.8546 | 0.3991 |
-| 5 | 0.9811 | 0.0637 | 0.8264 | 0.4764 |
+| 1 | 0.6302 | 0.6348 | 0.7300 | 0.5473 |
+| 2 | 0.8242 | 0.4057 | 0.8218 | 0.4200 |
+| 3 | 0.9057 | 0.2447 | 0.8136 | 0.4329 |
+| 4 | 0.9610 | 0.1179 | 0.7834 | 0.5317 |
+| 5 | 0.9911 | 0.0394 | 0.8328 | 0.5576 |
 
-In these numbers training accuracy keeps rising while validation loss is lowest after epoch 2 and rises afterwards, a typical sign of overfitting.
+In these numbers training accuracy keeps rising (to 0.9911) while validation loss is lowest after epoch 2 (0.4200) and rises afterwards, a typical sign of overfitting. Validation accuracy moves up and down between epochs and is highest after epoch 5.
 
-3. The test evaluation. Saved output from the author's run:
+3. The test evaluation. Saved output of the re-run:
 
 ```text
-782/782 ━━━━━━━━━━━━━━━━━━━━ 13s 17ms/step - accuracy: 0.8216 - loss: 0.4941
+782/782 ━━━━━━━━━━━━━━━━━━━━ 19s 25ms/step - accuracy: 0.8232 - loss: 0.5873
 
-Test Accuracy: 0.8216000199317932
+Test Accuracy: 0.823199987411499
 ```
 
-4. Six prediction blocks of the form:
+4. Progress lines from `model.predict`, then six prediction blocks of the form:
 
 ```text
 Review 1
@@ -209,17 +211,19 @@ Predicted Sentiment: Positive | Negative
 Actual Sentiment: Positive | Negative
 ```
 
-Saved output from the author's run:
+"Review 1" to "Review 6" are the test reviews `x_test[5]` to `x_test[10]`. The "Actual Sentiment" line reads `y_test[5 + i]`, the label of the same review as the prediction above it. Saved output of the re-run:
 
-| Printed as | Predicted probability | Predicted sentiment | "Actual Sentiment" line |
-|---|---|---|---|
-| Review 1 | 0.10118565 | Negative | Negative |
-| Review 2 | 0.99505144 | Positive | Positive |
-| Review 3 | 0.06819697 | Negative | Positive |
-| Review 4 | 0.9849787 | Positive | Negative |
-| Review 5 | 0.9863495 | Positive | Positive |
-| Review 6 | 0.9856678 | Positive | Positive |
+| Printed as | Test review | Predicted probability | Predicted sentiment | Actual sentiment | Correct |
+|---|---|---|---|---|---|
+| Review 1 | `x_test[5]` | 0.8757335 | Positive | Positive | Yes |
+| Review 2 | `x_test[6]` | 0.96682996 | Positive | Positive | Yes |
+| Review 3 | `x_test[7]` | 0.006729723 | Negative | Negative | Yes |
+| Review 4 | `x_test[8]` | 0.8812084 | Positive | Negative | No |
+| Review 5 | `x_test[9]` | 0.94578993 | Positive | Positive | Yes |
+| Review 6 | `x_test[10]` | 0.99060094 | Positive | Positive | Yes |
 
-Note on this cell: the predictions are made for `x_test[5:11]`, but the "Actual Sentiment" line reads `y_test[i]` for `i` = 0 to 5, which are the labels of `x_test[0:6]`. Each "Actual" line therefore belongs to a different review from the prediction above it, and the table cannot be read as correct or incorrect predictions. Reading `y_test[5 + i]` would align the two.
+5 of the 6 predictions are correct. The actual labels of `x_test[5:11]` (Positive, Positive, Negative, Negative, Positive, Positive) were also checked independently through `imdb.load_data`.
+
+Note on this cell: until 22 November 2026 the "Actual Sentiment" line read `y_test[i]`, the labels of `x_test[0:6]`, so each "Actual" line belonged to a different review from the prediction above it. The cell now reads `y_test[5 + i]`.
 
 Numbers will differ from run to run because the weights are initialised randomly and no random seed is set.

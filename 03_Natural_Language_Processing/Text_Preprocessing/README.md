@@ -40,7 +40,7 @@ Text preprocessing turns raw text into clean, consistent units that later NLP st
 
 **`new.py` (NLTK)**
 
-1. Calls `nltk.download` for `punkt`, `stopwords`, `averaged_perceptron_tagger_eng`, `maxent_ne_chunker`, `maxent_ne_chunker_tab`, `words` and `wordnet`.
+1. Calls `nltk.download` for `punkt`, `punkt_tab`, `stopwords`, `averaged_perceptron_tagger_eng`, `maxent_ne_chunker`, `maxent_ne_chunker_tab`, `words` and `wordnet`.
 2. Creates the English stop-word set, a `PorterStemmer`, a `WordNetLemmatizer` and a `pyttsx3` speech engine.
 3. Reads one line with `input("Enter your text: ")`.
 4. Prints the word count (`len(word_tokenize(text))`, which also counts punctuation tokens) and the sentence count (`len(nltk.sent_tokenize(text))`).
@@ -100,7 +100,7 @@ P(\text{label} \mid \text{features}) = \frac{\exp\left(\sum_i \lambda_i f_i\righ
 | Setting | `code1.py` | `new.py` |
 |---|---|---|
 | Library | spaCy (+ NLTK `PorterStemmer`) | NLTK |
-| Model / data | `en_core_web_sm` | `punkt`, `stopwords`, `averaged_perceptron_tagger_eng`, `maxent_ne_chunker`, `maxent_ne_chunker_tab`, `words`, `wordnet` |
+| Model / data | `en_core_web_sm` | `punkt`, `punkt_tab`, `stopwords`, `averaged_perceptron_tagger_eng`, `maxent_ne_chunker`, `maxent_ne_chunker_tab`, `words`, `wordnet` |
 | Stop words | spaCy `token.is_stop` | `stopwords.words('english')` |
 | Punctuation filter | `token.is_punct` (whitespace via `token.is_space`) | token in `string.punctuation` |
 | Stemmer | `PorterStemmer` on the lower-cased token | `PorterStemmer` on the filtered token |
@@ -149,7 +149,7 @@ P(\text{label} \mid \text{features}) = \frac{\exp\left(\sum_i \lambda_i f_i\righ
 There is no dataset file. Both scripts process text typed by the user at run time. They rely on pretrained resources:
 
 - **spaCy `en_core_web_sm`**: a small English pipeline (tagger, parser, lemmatizer, entity recognizer) installed with `python -m spacy download en_core_web_sm`.
-- **NLTK data packages** downloaded by `new.py` (stop-word lists, Punkt sentence tokenizer, perceptron POS tagger, maximum-entropy NE chunker, English word list and WordNet). By default they are stored in `%APPDATA%\nltk_data`.
+- **NLTK data packages** downloaded by `new.py` (stop-word lists, Punkt sentence tokenizer with its `punkt_tab` tables, perceptron POS tagger, maximum-entropy NE chunker, English word list and WordNet). By default they are stored in `%APPDATA%\nltk_data`.
 
 ## 12. How to Execute
 
@@ -169,11 +169,7 @@ Notes:
 
 - `new.py` calls `nltk.download` every time it starts. The first run needs internet access; later runs report the packages as up to date.
 - `new.py` speaks through the operating system's speech engine (SAPI5 on Windows), so turn on speakers or headphones. No internet is needed for speech.
-- NLTK 3.9 and later load the `punkt_tab` resource for `word_tokenize` and `sent_tokenize`, while the script downloads `punkt`. If a `LookupError` mentions `punkt_tab`, download it once with:
-
-```powershell
-python -c "import nltk; nltk.download('punkt_tab')"
-```
+- `new.py` downloads `punkt_tab` as well as `punkt`. NLTK 3.9 and later load `punkt_tab` for `word_tokenize` and `sent_tokenize`; with NLTK 3.10.3, `punkt` alone is not enough and tokenization raises a `LookupError` for `punkt_tab`. The `punkt_tab` download was added to the script on 22 November 2026.
 
 ## 13. Expected Output
 
@@ -197,3 +193,8 @@ There are no saved outputs for these scripts; this section describes what they p
 2. The prompt `Enter your text:`.
 3. Sections headed `---- Text Statistics ----` (word and sentence counts), `---- Tokens ----`, `---- After Stopword Removal ----`, `---- Stemming ----`, `---- Lemmatization ----` (each a Python list), `---- Part of Speech (POS) Tagging ----` (a list of `(word, tag)` tuples with tags such as `NN` for a noun, `VBD` for a past-tense verb and `JJ` for an adjective) and `---- Named Entities ----` (a list of entity phrases).
 4. `Reading Processed Text...` while the lemmatized words are spoken, then `Process Complete.`
+
+**Check on 22 November 2026** (Windows 11, NLTK 3.10.3):
+
+- `new.py` ran end to end with the real NLTK on a clean NLTK data folder, with the speaker (`pyttsx3`) replaced by a test stand-in. Tokenization, stop-word removal, stemming, lemmatization, POS tags and named entities were produced, and the final text reached the speaker stand-in. `Voice_Assistants/with_voice.py`, which runs the same NLTK steps, was checked in the same way; for the sample sentence "Barack Obama was born in Hawaii. He was the president of the United States." the named entities were `['Barack', 'Obama', 'Hawaii', 'United States']`. The real speaker was not tested.
+- `code1.py` was not run: spaCy could not load on the test machine because Windows Smart App Control blocked one of its compiled dependencies.
