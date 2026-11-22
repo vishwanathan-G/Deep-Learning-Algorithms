@@ -1,0 +1,26 @@
+# Deep-Learning-Algorithms - dependencies
+# Install with:  python -m pip install -r requirements.txt
+# Checked against Python 3.10.11; installed versions noted on the right where known.
+
+# --- 01_Convolutional_Neural_Network and 02_Recurrent_Neural_Network --------
+tensorflow>=2.15     # 2.21.0 (includes Keras; downloads CIFAR-10 / IMDB on first run)
+numpy>=1.24          # 2.2.6
+matplotlib>=3.7      # 3.10.9
+jupyter>=1.0
+
+# --- 03_Natural_Language_Processing ------------------------------------------
+nltk>=3.8            # 3.10.3 (the scripts download their NLTK data on first run)
+spacy>=3.7           # 3.8.16 (then: python -m spacy download en_core_web_sm)
+scikit-learn>=1.3    # Naive Bayes text classifier in the Smart Virtual Assistant notebook
+textblob>=0.17       # sentiment polarity in the Smart Virtual Assistant notebook
+sumy>=0.11           # 0.13.0 extractive summarisation
+transformers>=4.40,<5  # Hugging Face pipelines (download pretrained models on first use).
+                       # Kept below 5: transformers 5.x no longer provides the "summarization"
+                       # and "question-answering" pipeline tasks used in Smart_Virtual_Assistant.
+torch>=2.1           # backend for the transformers pipelines
+SpeechRecognition>=3.10  # voice input (uses Google's free web recogniser; needs internet)
+PyAudio>=0.2.13      # microphone access for SpeechRecognition
+pyttsx3>=2.90        # offline text-to-speech
+wikipedia>=1.4       # answers in bot_with_voice.py
+googletrans==4.0.2   # translation (unofficial Google Translate client)
+streamlit>=1.40,<2.0 # Machine_Translation_App

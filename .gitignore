@@ -1,0 +1,27 @@
+# Python and Jupyter
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Secrets and local settings
+.env
+.env.*
+.streamlit/secrets.toml
+
+# Trained models, downloaded datasets and caches
+*.h5
+*.keras
+*.joblib
+*.pkl
+saved_model/
+keras_datasets/
+nltk_data/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
